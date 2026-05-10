@@ -1,217 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Tonnel Ship Ultimate 🛒</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Niro Coin Loading</title>
 
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBIIMlC4FbZOcyttAnGwOK1zgt4Ki34qLY",
-  authDomain: "tonnel-ship.firebaseapp.com",
-  projectId: "tonnel-ship",
-  storageBucket: "tonnel-ship.appspot.com",
-  messagingSenderId: "466238209699",
-  appId: "1:466238209699:web:835fa8e7f7328478530916",
-  measurementId: "G-T7ML41LMBE"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const rdb = getDatabase(app);
-
-// ======= GLOBAL VARIABLES =======
-let products=[], cart=JSON.parse(localStorage.getItem("cart")||"[]");
-let currentUser=null;
-
-// ======= CUSTOMER SIGNUP/LOGIN =======
-async function customerSignup(email,password){
-  try{
-    const userCredential = await createUserWithEmailAndPassword(auth,email,password);
-    const user=userCredential.user;
-    const usersCol=collection(db,"users");
-    const snapshot=await getDocs(usersCol);
-    let isAdmin = snapshot.empty; // first user = admin
-    await addDoc(usersCol,{uid:user.uid,email,role:isAdmin?"admin":"customer"});
-    alert("Signup successful! You are "+(isAdmin?"Admin":"Customer"));
-    if(isAdmin) showAdminPanel();
-  }catch(e){alert("Failed: "+e.message);}
-}
-
-async function customerLogin(email,password){
-  try{
-    const userCredential = await signInWithEmailAndPassword(auth,email,password);
-    currentUser = userCredential.user;
-    const usersCol=collection(db,"users");
-    const snapshot = await getDocs(usersCol);
-    let role="customer";
-    snapshot.forEach(doc=>{if(doc.data().uid===currentUser.uid) role=doc.data().role;});
-    alert("Login successful as "+role);
-    if(role==="admin") showAdminPanel();
-  }catch(e){alert("Login failed: "+e.message);}
-}
-
-onAuthStateChanged(auth,user=>{if(user) currentUser=user;});
-
-// ======= CART FUNCTIONS =======
-function saveCart(){localStorage.setItem("cart",JSON.stringify(cart)); updateCart();}
-function addToCart(pid){let p=products.find(p=>p.id===pid); if(!p.stock){alert("Out of stock"); return;} let item=cart.find(c=>c.id===pid); if(item)item.qty++; else cart.push({...p,qty:1}); saveCart();}
-function removeFromCart(pid){cart=cart.filter(c=>c.id!==pid); saveCart();}
-function changeQty(pid,delta){let item=cart.find(c=>c.id===pid);if(item){item.qty+=delta; if(item.qty<1) cart=cart.filter(c=>c.id!==pid); saveCart();}}
-function updateCart(){let html=""; let total=0; cart.forEach(c=>{total+=c.price*c.qty; html+=`<div>${c.name} x ${c.qty} <button onclick="changeQty(${c.id},-1)">-</button><button onclick="changeQty(${c.id},1)">+</button> <button onclick="removeFromCart(${c.id})">Remove</button></div>`;}); document.getElementById("cartItems").innerHTML=html; document.getElementById("total").innerText="₦"+total;}
-window.onload=updateCart;
-
-// ======= AI SMART PRICING =======
-function aiPrice(product){
-  let demandFactor = Math.min(1 + product.sales/50, 1.5);
-  let suggested = product.basePrice * demandFactor;
-  if(suggested < product.minPrice) suggested = product.minPrice;
-  if(suggested > product.maxPrice) suggested = product.maxPrice;
-  return Math.round(suggested);
-}
-
-// ======= SEARCH =======
-function searchProducts(){let q=document.getElementById("searchInput").value.toLowerCase(); renderProducts(products.filter(p=>p.name.toLowerCase().includes(q)));}
-
-// ======= RENDER PRODUCTS =======
-function renderProducts(list){
-  let html=""; list.forEach(p=>{
-    html+=`<div class="card"><img src="${p.images[0]}" onclick="showProduct(${p.id})"><h4>${p.name}</h4><div class="price-old">₦${p.oldPrice}</div><div class="price-new">₦${p.price}</div>`;
-    if(!p.stock) html+='<div class="out">Out of Stock</div>';
-    html+=`<button class="add-btn" onclick="addToCart(${p.id})">Add to Cart</button></div>`;
-  });
-  document.getElementById("productList").innerHTML=html;
-}
-
-// ======= SHOW PRODUCT =======
-function showProduct(pid){
-  let p=products.find(p=>p.id===pid);
-  let html=`<h3>${p.name}</h3>`;
-  p.images.forEach(img=>html+=`<img class="carousel-img" src="${img}">`);
-  html+=`<div class="price-old">₦${p.oldPrice}</div><div class="price-new">₦${p.price}</div>`;
-  if(!p.stock) html+='<div class="out">Out of Stock</div>';
-  html+=`<p>Vendor: ${p.vendor}</p><button onclick="addToCart(${p.id})" class="add-btn">Add to Cart</button>`;
-  document.getElementById("productPage").innerHTML=html;
-  document.getElementById("productPage").style.display="block";
-  document.getElementById("productList").style.display="none";
-}
-
-// ======= ADMIN PANEL =======
-function showAdminPanel(){document.getElementById("adminPanel").style.display="block"; document.getElementById("customerLogin").style.display="none";}
-async function uploadProduct(){
-  const files=document.getElementById('imageFile').files;
-  if(files.length===0){alert("Select at least one image"); return;}
-  let imagesBase64=[];
-  let readCount=0;
-  for(let i=0;i<files.length;i++){
-    const reader=new FileReader();
-    reader.onload=function(e){
-      imagesBase64.push(e.target.result);
-      readCount++;
-      if(readCount===files.length){
-        const newProd={id:Date.now(),name:document.getElementById('name').value,oldPrice:parseFloat(document.getElementById('oldPrice').value),price:parseFloat(document.getElementById('price').value),stock:true,images:imagesBase64,vendor:"Admin",basePrice:parseFloat(document.getElementById('price').value),minPrice:parseFloat(document.getElementById('minPrice').value||0),maxPrice:parseFloat(document.getElementById('maxPrice').value||1000000),sales:0};
-        products.push(newProd); renderProducts(products); alert("Product added with images!"); 
-      }
-    }
-    reader.readAsDataURL(files[i]);
-  }
-}
-
-// ======= CHAT & NOTIFICATIONS =======
-function sendMessage(msg){push(ref(rdb,"messages"),{from:currentUser.email,msg:msg,time:Date.now()});}
-function listenMessages(){onChildAdded(ref(rdb,"messages"),snapshot=>{let data=snapshot.val();alert("New message from "+data.from+": "+data.msg);});}
-</script>
-
-<script src="https://checkout.flutterwave.com/v3.js"></script>
-
-<style>
-body{font-family:Arial;margin:0;background:#f5f5f5;}
-header{background:linear-gradient(90deg,brown,darkgreen,darkred,gold);color:white;text-align:center;padding:15px;font-size:24px;}
-.topbar{text-align:center;background:#fff8dc;padding:10px;color:brown;font-weight:bold;}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;padding:20px;}
-.card{background:white;padding:15px;border-radius:10px;text-align:center;border-top:5px solid gold;transition:0.3s;cursor:pointer;}
-.card:hover{transform: scale(1.03);}
-.card img{width:100%;height:150px;object-fit:cover;background:#ddd;border-radius:8px;}
-.price-old{text-decoration:line-through;color:black;}
-.price-new{color:darkred;font-weight:bold;}
-.out{color:red;font-weight:bold;}
-button{padding:8px;margin-top:5px;border:none;border-radius:5px;cursor:pointer;}
-.add-btn{background:darkgreen;color:white;}
-.admin-btn{background:brown;color:white;}
-#cart{position:fixed;right:0;top:0;width:350px;height:100%;background:#fff8dc;padding:10px;overflow:auto;border-left:4px solid brown;}
-#loginBox,#adminPanel,#customerLogin,#productPage{padding:10px;background:white;margin:20px;}
-input,select,textarea{margin:5px;padding:5px;width:90%;}
-#productPage{display:none;}
-.carousel-img{width:100%;height:200px;object-fit:cover;margin-bottom:5px;}
-</style>
+  <link rel="stylesheet" href="index.css">
 </head>
+
 <body>
 
-<header>Tonnel Ship Ultimate 🛒</header>
-<div class="topbar" id="customerServiceNumber">📞 Customer Service: +234 9041793011</div>
+  <div class="overlay"></div>
 
-<div style="text-align:center;padding:10px;">
-<input type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()">
-</div>
+  <div class="container">
 
-<!-- CUSTOMER LOGIN -->
-<div id="customerLogin">
-<h3>Customer Login / Signup</h3>
-<input id="custEmail" placeholder="Email">
-<input id="custPassword" type="password" placeholder="Password">
-<input type="checkbox" id="showPass" onclick="document.getElementById('custPassword').type=document.getElementById('custPassword').type==='password'?'text':'password'"> Show Password<br>
-<button onclick="customerSignup(document.getElementById('custEmail').value, document.getElementById('custPassword').value)">Signup</button>
-<button onclick="customerLogin(document.getElementById('custEmail').value, document.getElementById('custPassword').value)">Login</button>
-<br>
-<input type="checkbox" id="ageCheck"> Confirm you are 18+<br>
-<a href="#" onclick="alert('Show Terms')">Terms & Conditions</a> | <a href="#" onclick="alert('Show Privacy')">Privacy Policy</a>
-</div>
+    <!-- LOGO IMAGE -->
+    <div class="logo-box">
+      <img src="logo.png" alt="Niro Coin Logo" class="logo" />
+    </div>
 
-<!-- ADMIN PANEL -->
-<div id="adminPanel" style="display:none;">
-<h3>Admin Panel</h3>
-<h5>Add / Manage Products</h5>
-<input id="name" placeholder="Product Name">
-<input id="oldPrice" placeholder="Old Price">
-<input id="price" placeholder="New Price">
-<input id="minPrice" placeholder="Min Price">
-<input id="maxPrice" placeholder="Max Price">
-<input type="file" id="imageFile" multiple accept="image/*">
-<button class="admin-btn" onclick="uploadProduct()">Add Product</button>
-<h5>Chat / Notifications</h5>
-<textarea id="chatMsg" placeholder="Type message"></textarea>
-<button onclick="sendMessage(document.getElementById('chatMsg').value)">Send</button>
-<button onclick="listenMessages()">Start Listening</button>
-</div>
+    <h1>Niro Coin</h1>
 
-<!-- PRODUCT GRID -->
-<div class="products" id="productList"></div>
+    <p>The Future of Telegram Rewards</p>
 
-<!-- PRODUCT DETAIL -->
-<div id="productPage"></div>
+    <!-- LOADING BAR -->
+    <div class="loading-bar">
+      <div class="progress"></div>
+    </div>
 
-<!-- CART -->
-<div id="cart">
-<h3>Cart</h3>
-<div id="cartItems"></div>
-<h4 id="total">₦0</h4>
-<h5>Delivery Info</h5>
-<input id="state" placeholder="State">
-<input id="city" placeholder="City">
-<input id="lga" placeholder="LGA">
-<input id="community" placeholder="Community / Landmark">
-<input id="homeAddress" placeholder="Home Address">
-<input id="phone" placeholder="Phone Number">
-<button onclick="alert('Place Order')">Place Order</button>
-<button onclick="FlutterwaveCheckout({public_key:'FLWPUBK_TEST-61eb065b8bb1b78d8aa0d8f034811a95-X',tx_ref:'TonnelShip_'+Math.floor(Math.random()*1000000),amount:calculateCartTotal()+1000,currency:'NGN',payment_options:'card,ussd,qr',customer:{email:document.getElementById('custEmail').value,phonenumber:document.getElementById('phone').value,name:'Customer'},callback:function(data){alert('Payment completed! Ref: '+data.transaction_id);},onclose:function(){alert('Payment closed');},customizations:{title:'Tonnel Ship',description:'Purchase from Tonnel Ship',logo:'https://via.placeholder.com/50'}})">Pay Delivery ₦1000</button>
-</div>
+    <div class="loading-text">
+      Initializing system<span class="dots"></span>
+    </div>
 
-<script>renderProducts(products);</script>
+    <div class="footer">
+      Secure • Fast • Rewarding
+    </div>
+
+  </div>
+
+  <script>
+    // Redirect after 10 seconds
+    setTimeout(() => {
+      window.location.href = "home.html";
+    }, 10000);
+  </script>
+
 </body>
 </html>
