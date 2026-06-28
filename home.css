@@ -1,0 +1,96 @@
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+body { width: 100%; height: 100vh; height: 100dvh; background: #000; color: white; touch-action: manipulation; overflow: hidden; }
+.overlay { position: fixed; width: 100%; height: 100%; background: radial-gradient(circle at center, rgba(0,0,0,0.5) 0%, #000 100%); z-index: 1; }
+.app { position: relative; z-index: 2; height: 100vh; height: 100dvh; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+
+/* Top Bar */
+.top-bar { display: flex; justify-content: space-between; align-items: center; }
+.profile-box { display: flex; align-items: center; gap: 8px; }
+.profile-box img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ffd700; }
+.profile-box h3 { font-size: 14px; }
+#userId { font-family: monospace; color: #ffd700; font-size: 10px; opacity: 0.8; }
+.pph-box { text-align: center; }
+.pph-box span { font-size: 10px; color: #888; text-transform: uppercase; }
+.pph-display { display: flex; align-items: center; gap: 4px; justify-content: center; }
+.pph-display h2 { font-size: 16px; }
+.mini-coin { width: 14px; height: 14px; vertical-align: middle; }
+.balance-box { text-align: right; }
+.balance-box span { font-size: 10px; color: #888; text-transform: uppercase; }
+.balance-display { display: flex; align-items: center; gap: 5px; }
+.balance-display img { width: 24px; height: 24px; }
+.balance-display h2 { color: #ffd700; font-size: 18px; }
+
+/* Game Area */
+.game-area { flex: 1; position: relative; max-height: 40vh; margin: 10px 0; border-radius: 25px; background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.1); overflow: hidden; }
+.instructions { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #555; font-size: 14px; pointer-events: none; }
+
+/* Game Objects */
+.coin { position: absolute; width: 70px; height: 70px; border-radius: 50%; cursor: pointer; filter: drop-shadow(0 0 10px gold); animation: drop 1.5s linear forwards; }
+.crate { position: absolute; font-size: 55px; cursor: pointer; height:70px; width:70px; animation: drop 2.7s linear forwards; transition: transform 0.1s; }
+@keyframes drop { from { top: -100px; } to { top: 110%; } }
+
+/* Effects */
+.crack-1 { transform: scale(0.9); filter: contrast(1.2) sepia(0.3); }
+.crack-2 { transform: scale(0.85); filter: contrast(1.5) sepia(0.6) drop-shadow(0 0 8px red); }
+.dust { position: absolute; width: 4px; height: 4px; background: #ffd700; border-radius: 50%; pointer-events: none; animation: dustFade 0.6s ease-out forwards; }
+@keyframes dustFade { 0% { opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)); opacity: 0; } }
+
+/* Controls */
+.control-section { display: flex; justify-content: center; margin-bottom: 8px; }
+.action-btn { background: linear-gradient(to right, #ffd700, #ffa500); border: none; padding: 10px 40px; border-radius: 50px; color: #000; font-weight: bold; font-size: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
+.action-btn.stop { background: #ff4444; color: white; box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3); }
+
+/* Rank & Progress */
+.rank-progress-section { margin-bottom: 5px; }
+.rank-header { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+.rank-progress-bar { width: 100%; height: 7px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+.rank-progress-fill { height: 100%; background: linear-gradient(to right, #ffd700, #ffa500); width: 0%; transition: width 0.3s; }
+
+/* Stats & Nav */
+.stats { display: flex; gap: 8px; margin: 8px 0; }
+.stat-card { flex: 1; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 12px; text-align: center; }
+.stat-card span { font-size: 10px; color: #888; }
+.stat-card h3 { font-size: 14px; }
+.bottom-nav { display: flex; background: #111; padding: 8px; border-radius: 20px; border: 1px solid #222; }
+.bottom-nav button { flex: 1; background: none; border: none; color: #555; font-size: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.active-nav { color: #ffd700 !important; }
+.modal {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%; height: 80%;
+  background: #111;
+  border-top: 3px solid gold;
+  border-radius: 30px 30px 0 0;
+  z-index: 100;
+  padding: 20px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.close-btn { background: none; border: none; color: white; font-size: 30px; }
+
+.upgrade-grid { display: grid; grid-template-columns: 1fr; gap: 15px; overflow-y: auto; height: 90%; }
+
+.upgrade-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,215,0,0.2);
+  padding: 15px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+}
+
+.upgrade-card:active { transform: scale(0.98); background: rgba(255,215,0,0.1); }
+.card-icon { font-size: 30px; }
+.card-info h4 { font-size: 16px; margin-bottom: 2px; }
+.card-info p { font-size: 12px; color: #aaa; }
+.cost { font-size: 13px; color: gold; font-weight: bold; }
+
+button:hover{
+  background-color: #333;
+}

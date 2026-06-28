@@ -2,11 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Niro Coin - Tap to Earn</title>
+  <link rel="stylesheet" href="home.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  
+  <div class="overlay"></div>
+  <div class="app">
+    <div class="top-bar">
+      <div class="profile-box">
+        <img id="userPhoto" src="avatar.png" alt="avatar">
+        <div>
+          <h3 id="userName">@username</h3>
+          <p id="userId">ID: Loading...</p>
+        </div>
+      </div>
+      <div class="pph-box">
+        <span>Profit Per Hour</span>
+        <div class="pph-display">
+          <img src="logo.png" alt="coin" class="mini-coin">
+          <h2 id="pphi"></h2>
+        </div>
+      </div>
+      <div class="balance-box">
+        <span>Balance</span>
+        <div class="balance-display">
+          <img src="logo.png" alt="coin">
+          <h2 id="balance">0</h2>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-area" id="gameArea">
+      <div class="instructions" id="instructions">Tap Start to begin mining</div>
+    </div>
+
+    <div class="control-section">
+      <button id="toggleBtn" class="action-btn">Start Mining</button>
+    </div>
+
+    <div class="rank-progress-section">
+      <div class="rank-header">
+        <span>Rank: <b id="rank">Coal</b></span>
+        <span id="nextRankText">Next: Bronze</span>
+      </div>
+      <div class="rank-progress-bar">
+        <div class="rank-progress-fill" id="rankProgressFill"></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card"><span>⚡ Energy</span><h3 id="energy">1000</h3></div>
+      <div class="stat-card"><span>🔥 Combo</span><h3 id="combo">0</h3></div>
+    </div>
+    
+
+
+    <div class="bottom-nav">
+      <button onclick="window.location.href = 'refferal.html'">👥<span>Referral</span></button>
+      <button onclick="window.location.href = 'upgrades.html'">🚀<span>Upgrades</span></button>
+      <button class="active-nav" onclick="window.location.href = 'home.html'">⛏️<span>Mine</span></button>
+      <button onclick="window.location.href = 'tasks.html'">📋<span>Tasks</span></button>
+      <button onclick="window.location.href = 'wallet.html'">💰<span>Wallet</span></button>
+    </div>
+  </div>
+  <script src="home.js"></script>
 </body>
 </html>
