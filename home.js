@@ -1,6 +1,9 @@
 // INITIALIZE TELEGRAM
-const tg = window.Telegram.WebApp;
-tg.expand();
+const tg = window.Telegram?.WebApp || null;
+
+if (tg && typeof tg.expand === 'function') {
+    tg.expand();
+}
 
 // DOM ELEMENTS
 const gameArea = document.getElementById('gameArea');
@@ -24,14 +27,27 @@ const slashSound = new Audio('slash.mp3');
 const explodeSound = new Audio('explode.mp3');
 
 // 1. TELEGRAM & ID GENERATION
+// ==========================================
+// 2. USER INITIALIZATION LOGIC
+// ==========================================
 function initUser() {
-    if (tg.initDataUnsafe?.user) {
+    if (tg && tg.initDataUnsafe?.user) {
         const u = tg.initDataUnsafe.user;
-        document.getElementById('userName').innerText = `@${u.username || u.first_name}`;
+        
+        // Only prepend '@' if a public username actually exists
+        if (u.username) {
+            document.getElementById('userName').innerText = `@${u.username}`;
+        } else {
+            document.getElementById('userName').innerText = u.first_name;
+        }
+        
         document.getElementById('userId').innerText = `ID: ${u.id}`;
-        if (u.photo_url) document.getElementById('userPhoto').src = u.photo_url;
+        
+        if (u.photo_url) {
+            document.getElementById('userPhoto').src = u.photo_url;
+        }
     } else {
-        // Fallback ID Generation
+        // Fallback ID Generation (Runs on Live Server/Browsers)
         let savedKey = localStorage.getItem('niro_key');
         if (!savedKey) {
             savedKey = `NR-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
