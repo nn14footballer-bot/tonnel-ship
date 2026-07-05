@@ -1,6 +1,9 @@
 // INITIALIZE TELEGRAM
-const tg = window.Telegram.WebApp || null;
-tg.ready();
+const tg = window.Telegram?.WebApp || null;
+
+if (tg) {
+    tg.ready();
+}
 
 // DOM ELEMENTS
 const gameArea = document.getElementById('gameArea');
@@ -27,20 +30,25 @@ const explodeSound = new Audio('explode.mp3');
 // ==========================================
 // 2. USER INITIALIZATION LOGIC
 // ==========================================
-function initUser() 
-        const u = Telegram.WebApp.initDataUnsafe.user;
-        // Only prepend '@' if a public username actually exists
-        
-        const UserName = document.getElementById('userName');
-        UserName.innerText = `@${u.username}` || u.first_name;
-        
-     const UID = document.getElementById('userId');
-     UID.innerText = `ID: ${u.id}`;
+function initUser() {
+    const u = tg?.initDataUnsafe?.user;
 
-         const UserPHoto = document.getElementById('userPhoto');
-         UserPHoto.src = u.photo_url || "https://media.istockphoto.com/id/1300845620/vector/user-icon-flat-isolated-on-white-background-user-symbol-vector-illustration.jpg";
-        
-    
+    if (!u) {
+        tg.showAlert("Telegram user data could not be loaded.");
+        return;
+    }
+
+    const UserName = document.getElementById("userName");
+    UserName.innerText = u.username ? @${u.username} : u.first_name;
+
+    const UID = document.getElementById("userId");
+    UID.innerText = ID: ${u.id};
+
+    const UserPHoto = document.getElementById("userPhoto");
+    UserPHoto.src =
+        u.photo_url ||
+        "https://media.istockphoto.com/id/1300845620/vector/user-icon-flat-isolated-on-white-background-user-symbol-vector-illustration.jpg";
+}
 // 2. OFFLINE EARNINGS (3 Hour Limit)
 function checkOffline() {
     const lastTime = localStorage.getItem('last_active');
